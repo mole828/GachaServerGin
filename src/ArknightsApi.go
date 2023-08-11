@@ -3,19 +3,11 @@ package src
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
-)
-
-const (
-	Host          = "https://ak.hypergryph.com"
-	UserInfoPath  = "/u8/user/info/v1/basic"
-	GachaInfoPath = "/user/api/inquiry/gacha"
 )
 
 type ArknightsApi struct{}
@@ -50,7 +42,7 @@ func (ArknightsApi) GetUser(token string) (User, error) {
 		},
 	}
 	postJSON, _ := json.Marshal(postData)
-	postResponse, err := http.Post(Host+UserInfoPath, "application/json", bytes.NewBuffer(postJSON))
+	postResponse, err := http.Post("https://as.hypergryph.com/u8/user/info/v1/basic", "application/json", bytes.NewBuffer(postJSON))
 	if err != nil {
 		return User{}, err
 	}
@@ -62,13 +54,11 @@ func (ArknightsApi) GetUser(token string) (User, error) {
 	var responseData ResponseData[User]
 	err = json.Unmarshal(postResponseBody, &responseData)
 	if err != nil {
+		Logger.Error(string(postResponseBody))
 		return User{}, err
 	}
-
-	if responseData.Status != 0 {
-		return User{}, errors.New(fmt.Sprintf("responseData.Msg: %s", responseData.Msg))
-	}
 	data := responseData.Data
+	data.Token = token
 	return data, nil
 }
 
@@ -96,7 +86,7 @@ type Gacha struct {
 }
 
 func getGachaBody(token string, channelId int, page int) ([]byte, error) {
-	u, err := url.Parse(Host + GachaInfoPath)
+	u, err := url.Parse("https://ak.hypergryph.com/user/api/inquiry/gacha")
 	if err != nil {
 		log.Fatal(err)
 	}

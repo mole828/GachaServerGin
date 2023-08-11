@@ -3,12 +3,14 @@ package implements
 import (
 	"GachaServerGin/src"
 	"GachaServerGin/tools"
+	"github.com/samber/lo"
 	"math"
 )
 
 type MemAnalyze struct {
-	data     src.GachaData
-	analyses tools.DefaultDict[string, src.Analysis]
+	data         src.GachaData
+	analyses     tools.DefaultDict[string, src.Analysis]
+	limitedPools []string
 }
 
 func makeRarityCounter() tools.Counter[int] {
@@ -36,6 +38,38 @@ func (an MemAnalyze) Analyze(uid string) {
 	}
 	analyses.Summary = summary.Data()
 
+	hd := src.HasDraw{}
+	var (
+		endLimited = false
+		endNormal  = false
+	)
+	for _, gacha := range data {
+		for _, char := range gacha.Chars {
+			if lo.IndexOf(an.limitedPools, gacha.Pool) != -1 {
+				if !endLimited {
+					if char.Rarity == 5 {
+						endLimited = true
+						break
+					}
+					hd.Limited += 1
+				}
+			} else {
+				if !endNormal {
+					if char.Rarity == 5 {
+						endNormal = true
+						break
+					}
+					hd.Normal += 1
+				}
+			}
+			src.Logger.Infof("%s %s %+v", gacha.Pool, char.Name, hd)
+		}
+		if endLimited && endNormal {
+			break
+		}
+	}
+	analyses.HasDraw = hd
+
 	an.analyses.Set(uid, analyses)
 }
 
@@ -44,13 +78,22 @@ func (an MemAnalyze) Analysis(uid string) src.Analysis {
 }
 
 func NewMemAnalyst(data src.GachaData) src.Analyst {
-	return MemAnalyze{
-		data,
-		tools.NewDefaultDict[string, src.Analysis](func() src.Analysis {
+	v := MemAnalyze{
+		data: data,
+		analyses: tools.NewDefaultDict[string, src.Analysis](func() src.Analysis {
 			return src.Analysis{
 				Summary: src.RarityCounter{},
 				Pools:   map[string]src.RarityCounter{},
+				HasDraw: src.HasDraw{},
 			}
 		}),
+		limitedPools: src.GetLimitedPools(),
 	}
+	src.Logger.Infof("limited pools: %+v", v.limitedPools)
+	return v
+}
+
+func (an MemAnalyze) UpdateLimitedPools() {
+	an.limitedPools = src.GetLimitedPools()
+	panic("TODO: how to re analyze ")
 }

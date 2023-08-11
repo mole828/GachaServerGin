@@ -1,9 +1,5 @@
 package src
 
-import (
-	"time"
-)
-
 //type GachaDatabase struct {
 //	Users  *qmgo.Collection
 //	Gachas *qmgo.Collection
@@ -23,12 +19,15 @@ import (
 //}
 
 type GachaService struct {
-	api  ArknightsApi
-	data GachaData
+	api           ArknightsApi
+	data          GachaData
+	updateChannel chan string
 }
 
-func (s GachaService) updateUser(user User) error {
-	apiUser, err := s.api.GetUser(user.Token)
+func (s GachaService) updateUser(token string) error {
+	apiUser, err := s.api.GetUser(token)
+	apiUser.Token = token
+	user := s.data.GetUser(apiUser.Uid)
 	if err != nil {
 		return err
 	}
@@ -61,20 +60,20 @@ func (s GachaService) updateUser(user User) error {
 	return nil
 }
 
-func (s GachaService) fetchAll() {
-	for _, user := range s.data.GetUsers() {
-		err := s.updateUser(user)
+func (s GachaService) ScheduledTask() {
+	defer Logger.Error("ScheduledTask end")
+	for {
+		token := <-s.updateChannel
+		err := s.updateUser(token)
 		if err != nil {
 			Logger.Error(err)
 		}
-		time.Sleep(time.Minute)
 	}
 }
 
-func NewGachaService(data GachaData) *GachaService {
-
-	return &GachaService{
-		api:  ArknightsApi{},
-		data: data,
-	}
-}
+//func NewGachaService(data GachaData) *GachaService {
+//	return &GachaService{
+//		api:  ArknightsApi{},
+//		data: data,
+//	}
+//}

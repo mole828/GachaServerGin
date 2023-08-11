@@ -8,11 +8,12 @@ import (
 var token = "j+GRJigVftyXQXmz/sWvgXEE"
 
 func TestArknightsApi_GetUser(t *testing.T) {
+	token = "j+GRJigVftyXQXmz/sWvgXEE"
 	user, err := ArknightsApi{}.GetUser(token)
 	if err != nil {
 		t.Error(err)
 	}
-	t.Log(user)
+	t.Logf("%+v", user)
 }
 
 func TestArknightsApi_GetGacha(t *testing.T) {

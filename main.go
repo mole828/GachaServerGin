@@ -46,7 +46,11 @@ func main() {
 	}()
 	app.GET("/analysis", func(context *gin.Context) {
 		uid := context.Query("uid")
-		context.JSON(200, analyst.Analysis(uid))
+		analysis := analyst.Analysis(uid)
+		user := data.GetUser(uid)
+		user.Token = ""
+		analysis.User = user
+		context.JSON(200, analysis)
 	})
 
 	service := src.NewGachaService(data, analyst)

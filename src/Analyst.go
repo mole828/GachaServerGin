@@ -8,6 +8,7 @@ type HasDraw struct {
 }
 
 type Analysis struct {
+	User    User                     `json:"user"`
 	Summary RarityCounter            `json:"summary"`
 	Pools   map[string]RarityCounter `json:"pools"`
 	HasDraw HasDraw                  `json:"hasDraw"`

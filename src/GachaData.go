@@ -11,5 +11,5 @@ type GachaData interface {
 	AddGacha(gacha Gacha)
 	GetGacha(uid string, ts int) Gacha
 	HasGacha(uid string, ts int) bool
-	GetGachasByPage(uid string, page int, pageSize int) []Gacha
+	GetGachasByPage(uid string, page int, pageSize int) PaginationData[Gacha]
 }

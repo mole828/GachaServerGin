@@ -2,6 +2,7 @@ package implements
 
 import (
 	"GachaServerGin/src"
+	"GachaServerGin/tools"
 	"context"
 	"errors"
 	"github.com/qiniu/qmgo"
@@ -12,6 +13,8 @@ type GameDataMongoImplement struct {
 	client *qmgo.Client
 	users  *qmgo.Collection
 	gachas *qmgo.Collection
+
+	getUser func(uid string) src.User
 }
 
 func NewMongoData() (GameDataMongoImplement, error) {
@@ -34,6 +37,19 @@ func NewMongoData() (GameDataMongoImplement, error) {
 		return GameDataMongoImplement{}, err
 	}
 	src.Logger.Infof("gachas count: %d", count)
+	impl.getUser = func(uid string) src.User {
+		var user src.User
+		err := impl.users.Find(context.Background(), bson.M{"uid": uid}).One(&user)
+		if err != nil {
+			src.Logger.Error(err)
+			return src.User{}
+		}
+		return user
+	}
+	impl.getUser, err = tools.Cache11(impl.getUser)
+	if err != nil {
+		return GameDataMongoImplement{}, err
+	}
 	return impl, nil
 }
 
@@ -46,13 +62,7 @@ func (g GameDataMongoImplement) AddUser(user src.User) {
 }
 
 func (g GameDataMongoImplement) GetUser(uid string) src.User {
-	var user src.User
-	err := g.users.Find(context.Background(), bson.M{"uid": uid}).One(&user)
-	if err != nil {
-		src.Logger.Error(err)
-		return src.User{}
-	}
-	return user
+	return g.getUser(uid)
 }
 
 func (g GameDataMongoImplement) GetUsers() []src.User {
@@ -122,17 +132,31 @@ func (g GameDataMongoImplement) HasGacha(uid string, ts int) bool {
 	return count > 0
 }
 
-func (g GameDataMongoImplement) GetGachasByPage(uid string, page int, pageSize int) []src.Gacha {
+func (g GameDataMongoImplement) GetGachasByPage(uid string, page int, pageSize int) src.PaginationData[src.Gacha] {
 	var gachas []src.Gacha
 	filter := bson.M{}
 	if uid != "" {
 		filter["uid"] = uid
 	}
 	src.Logger.Infof("GetGachasByPage: filter %+v", filter)
-	err := g.gachas.Find(context.Background(), filter).Sort("-ts").Skip(int64(page * pageSize)).Limit(int64(pageSize)).All(&gachas)
+	query := g.gachas.Find(context.Background(), filter).Sort("-ts")
+	total, err := query.Count()
 	if err != nil {
 		src.Logger.Error(err)
-		return gachas
+		return src.PaginationData[src.Gacha]{}
 	}
-	return gachas
+	query = query.Skip(int64(page * pageSize)).Limit(int64(pageSize))
+	err = query.All(&gachas)
+	if err != nil {
+		src.Logger.Error(err)
+		return src.PaginationData[src.Gacha]{}
+	}
+	return src.PaginationData[src.Gacha]{
+		List: gachas,
+		Pagination: src.Pagination{
+			Current:  page,
+			Total:    int(total),
+			PageSize: pageSize,
+		},
+	}
 }

@@ -1,35 +1,18 @@
 package src
 
-//type GachaDatabase struct {
-//	Users  *qmgo.Collection
-//	Gachas *qmgo.Collection
-//}
-//
-//func newDataBase(mongoUri string) (GachaDatabase, error) {
-//	ctx := context.Background()
-//	client, err := qmgo.NewClient(ctx, &qmgo.Config{Uri: mongoUri})
-//	if err != nil {
-//		return GachaDatabase{}, err
-//	}
-//	data := GachaDatabase{
-//		Users:  client.Database("moles").Collection("doctors"),
-//		Gachas: client.Database("moles").Collection("gachas"),
-//	}
-//	return data, nil
-//}
-
 type GachaService struct {
 	api           ArknightsApi
 	data          GachaData
-	updateChannel chan string
+	UpdateChannel chan string
 }
 
-func (s GachaService) updateUser(token string) error {
+func (s GachaService) updateUser(token string) (int, error) {
 	apiUser, err := s.api.GetUser(token)
 	apiUser.Token = token
+	count := 0
 	user := s.data.GetUser(apiUser.Uid)
 	if err != nil {
-		return err
+		return count, err
 	}
 	if apiUser.NickName != user.NickName {
 		s.data.UpdateName(user.Uid, apiUser.NickName)
@@ -41,7 +24,7 @@ func (s GachaService) updateUser(token string) error {
 	for needNextPage {
 		paginationGacha, err := s.api.GetGacha(user.Token, user.ChannelMasterId, page)
 		if err != nil {
-			return err
+			return count, err
 		}
 		gachas := paginationGacha.List
 		if len(gachas) == 0 {
@@ -53,27 +36,34 @@ func (s GachaService) updateUser(token string) error {
 			} else {
 				gacha.Uid = user.Uid
 				s.data.AddGacha(gacha)
+				count += 1
 			}
 		}
 		page += 1
 	}
-	return nil
+	return count, nil
 }
 
-func (s GachaService) ScheduledTask() {
-	defer Logger.Error("ScheduledTask end")
+func (s GachaService) task() {
+	defer Logger.Error("task end")
 	for {
-		token := <-s.updateChannel
-		err := s.updateUser(token)
+		token := <-s.UpdateChannel
+		count, err := s.updateUser(token)
 		if err != nil {
 			Logger.Error(err)
+		}
+		if count > 0 {
+			Logger.Infof("token:%s, update: %d", token, count)
 		}
 	}
 }
 
-//func NewGachaService(data GachaData) *GachaService {
-//	return &GachaService{
-//		api:  ArknightsApi{},
-//		data: data,
-//	}
-//}
+func NewGachaService(data GachaData) *GachaService {
+	service := &GachaService{
+		api:           ArknightsApi{},
+		data:          data,
+		UpdateChannel: make(chan string),
+	}
+	go service.task()
+	return service
+}

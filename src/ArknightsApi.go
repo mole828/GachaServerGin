@@ -63,12 +63,13 @@ func (ArknightsApi) GetUser(token string) (User, error) {
 }
 
 type Pagination struct {
-	Current int `json:"current"`
-	Total   int `json:"total"`
+	Current  int `json:"current"`
+	Total    int `json:"total"`
+	PageSize int `json:"pageSize"`
 }
 
 type PaginationData[T any] struct {
-	List       []T `json:"List"`
+	List       []T `json:"list"`
 	Pagination `json:"pagination"`
 }
 
@@ -79,10 +80,11 @@ type Char struct {
 }
 
 type Gacha struct {
-	Chars []Char `json:"chars"`
-	Pool  string `json:"pool"`
-	Ts    int    `json:"ts"`
-	Uid   string `json:"uid"` // add flied
+	Chars    []Char `json:"chars"`
+	Pool     string `json:"pool"`
+	Ts       int    `json:"ts"`
+	Uid      string `json:"uid"`      // add flied
+	NickName string `json:"nickName"` // add flied
 }
 
 func getGachaBody(token string, channelId int, page int) ([]byte, error) {

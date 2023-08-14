@@ -5,6 +5,7 @@ import (
 	"GachaServerGin/src"
 	"github.com/gin-gonic/gin"
 	"strconv"
+	"time"
 )
 
 func main() {
@@ -19,21 +20,38 @@ func main() {
 		//service.data.GetUsers()
 		context.JSON(200, data.GetUsers())
 	})
+	app.GET("/users.invalid", func(context *gin.Context) {
+		context.JSON(200, []string{"TODO"})
+	})
 	app.GET("/gachas", func(context *gin.Context) {
 		page, err := strconv.Atoi(context.DefaultQuery("page", "0"))
 		if err != nil {
 			context.Status(400)
 		}
 		uid := context.Query("uid")
-		context.JSON(200, data.GetGachasByPage(uid, page, 10))
+		gachas := data.GetGachasByPage(uid, page, 10)
+		for index, gacha := range gachas.List {
+			gachas.List[index].NickName = data.GetUser(gacha.Uid).NickName
+		}
+		context.JSON(200, gin.H{
+			"data": gachas,
+		})
 	})
-
 	app.GET("/analysis", func(context *gin.Context) {
 		uid := context.Query("uid")
 		context.JSON(200, analyst.Analysis(uid))
 	})
 
-	analyst.Analyze("69023059")
+	service := src.NewGachaService(data)
+	go func() {
+		for {
+			for _, user := range data.GetUsers() {
+				src.Logger.Infof("user: %s begin", user.NickName)
+				service.UpdateChannel <- user.Token
+				time.Sleep(time.Minute)
+			}
+		}
+	}()
 
 	err = app.Run(":8000")
 	if err != nil {

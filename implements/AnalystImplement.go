@@ -17,10 +17,8 @@ func makeRarityCounter() tools.Counter[int] {
 	return tools.NewCounter[int]()
 }
 
-func (an MemAnalyze) Analyze(uid string) {
+func (an MemAnalyze) analyzeData(uid string, data []src.Gacha) {
 	analyses := an.analyses.Get(uid)
-
-	data := an.data.GetGachasByPage(uid, 0, math.MaxInt)
 	pools := tools.NewDefaultDict[string, tools.Counter[int]](makeRarityCounter)
 	for _, gacha := range data {
 		pool := pools.Get(gacha.Pool)
@@ -62,7 +60,7 @@ func (an MemAnalyze) Analyze(uid string) {
 					hd.Normal += 1
 				}
 			}
-			src.Logger.Infof("%s %s %+v", gacha.Pool, char.Name, hd)
+			//src.Logger.Infof("%s %s %+v", gacha.Pool, char.Name, hd)
 		}
 		if endLimited && endNormal {
 			break
@@ -71,6 +69,11 @@ func (an MemAnalyze) Analyze(uid string) {
 	analyses.HasDraw = hd
 
 	an.analyses.Set(uid, analyses)
+}
+
+func (an MemAnalyze) Analyze(uid string) {
+	data := an.data.GetGachasByPage(uid, 0, math.MaxInt)
+	an.analyzeData(uid, data.List)
 }
 
 func (an MemAnalyze) Analysis(uid string) src.Analysis {

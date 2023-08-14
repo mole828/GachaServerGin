@@ -4,6 +4,7 @@ type GachaService struct {
 	api           ArknightsApi
 	data          GachaData
 	UpdateChannel chan string
+	analyst       Analyst
 }
 
 func (s GachaService) updateUser(token string) (int, error) {
@@ -47,22 +48,25 @@ func (s GachaService) updateUser(token string) (int, error) {
 func (s GachaService) task() {
 	defer Logger.Error("task end")
 	for {
-		token := <-s.UpdateChannel
-		count, err := s.updateUser(token)
+		uid := <-s.UpdateChannel
+		user := s.data.GetUser(uid)
+		count, err := s.updateUser(user.Token)
 		if err != nil {
 			Logger.Error(err)
 		}
 		if count > 0 {
-			Logger.Infof("token:%s, update: %d", token, count)
+			Logger.Infof("user:%s, update: %d", user.NickName, count)
+			s.analyst.Analyze(user.Uid)
 		}
 	}
 }
 
-func NewGachaService(data GachaData) *GachaService {
+func NewGachaService(data GachaData, analyst Analyst) *GachaService {
 	service := &GachaService{
 		api:           ArknightsApi{},
 		data:          data,
 		UpdateChannel: make(chan string),
+		analyst:       analyst,
 	}
 	go service.task()
 	return service

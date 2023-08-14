@@ -37,17 +37,24 @@ func main() {
 			"data": gachas,
 		})
 	})
+
+	go func() {
+		analyst.Analyze("")
+		for _, user := range data.GetUsers() {
+			analyst.Analyze(user.Uid)
+		}
+	}()
 	app.GET("/analysis", func(context *gin.Context) {
 		uid := context.Query("uid")
 		context.JSON(200, analyst.Analysis(uid))
 	})
 
-	service := src.NewGachaService(data)
+	service := src.NewGachaService(data, analyst)
 	go func() {
 		for {
 			for _, user := range data.GetUsers() {
 				src.Logger.Infof("user: %s begin", user.NickName)
-				service.UpdateChannel <- user.Token
+				service.UpdateChannel <- user.Uid
 				time.Sleep(time.Minute)
 			}
 		}

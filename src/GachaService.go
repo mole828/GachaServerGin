@@ -32,10 +32,10 @@ func (s GachaService) updateUser(token string) (int, error) {
 			break
 		}
 		for _, gacha := range gachas {
+			gacha.Uid = user.Uid
 			if s.data.HasGacha(gacha.Uid, gacha.Ts) {
 				needNextPage = false
 			} else {
-				gacha.Uid = user.Uid
 				s.data.AddGacha(gacha)
 				count += 1
 			}

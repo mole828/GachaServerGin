@@ -138,7 +138,7 @@ func (g GameDataMongoImplement) GetGachasByPage(uid string, page int, pageSize i
 	if uid != "" {
 		filter["uid"] = uid
 	}
-	src.Logger.Infof("GetGachasByPage: filter %+v", filter)
+	//src.Logger.Infof("GetGachasByPage: filter %+v", filter)
 	query := g.gachas.Find(context.Background(), filter).Sort("-ts")
 	total, err := query.Count()
 	if err != nil {

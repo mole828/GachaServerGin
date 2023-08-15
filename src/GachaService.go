@@ -1,5 +1,7 @@
 package src
 
+import "errors"
+
 type GachaService struct {
 	api           ArknightsApi
 	data          GachaData
@@ -11,7 +13,17 @@ func (s GachaService) updateUser(user User) (int, error) {
 	count := 0
 	apiUser, err := s.api.FindUser(user.Token)
 	if err != nil {
-		return count, err
+		var responseDataStatusError ResponseDataStatusError[User]
+		switch {
+		case errors.As(err, &responseDataStatusError):
+			switch responseDataStatusError.Status {
+			case 3:
+				return 0, errors.New(responseDataStatusError.Msg)
+			}
+			break
+		default:
+			return count, err
+		}
 	}
 	if apiUser.NickName == "" {
 		Logger.Errorf("nickName is empty, user: %+v", user)
@@ -54,7 +66,7 @@ func (s GachaService) task() {
 		user := s.data.GetUser(uid)
 		count, err := s.updateUser(user)
 		if err != nil {
-			Logger.Errorf("update user %+v with error: %e", user, err)
+			Logger.WithError(err).Infof("update user %+v", user)
 		}
 		if count > 0 {
 			Logger.Infof("user:%s, update: %d", user.NickName, count)

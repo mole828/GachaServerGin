@@ -4,7 +4,7 @@ import "github.com/sirupsen/logrus"
 
 func logger() *logrus.Logger {
 	re := logrus.New()
-	//re.SetReportCaller(true)
+	re.SetReportCaller(true)
 	//re.SetFormatter(&logrus.TextFormatter{
 	//
 	//	//ForceColors: true,

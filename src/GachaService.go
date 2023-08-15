@@ -8,13 +8,13 @@ type GachaService struct {
 }
 
 func (s GachaService) updateUser(token string) (int, error) {
-	apiUser, err := s.api.GetUser(token)
-	apiUser.Token = token
 	count := 0
-	user := s.data.GetUser(apiUser.Uid)
+	apiUser, err := s.api.GetUser(token)
 	if err != nil {
 		return count, err
 	}
+	apiUser.Token = token
+	user := s.data.GetUser(apiUser.Uid)
 	if apiUser.NickName != user.NickName {
 		s.data.UpdateName(user.Uid, apiUser.NickName)
 		Logger.Infof("uid: %s change name, %s -> %s", user.Uid, user.NickName, apiUser.NickName)
@@ -52,7 +52,7 @@ func (s GachaService) task() {
 		user := s.data.GetUser(uid)
 		count, err := s.updateUser(user.Token)
 		if err != nil {
-			Logger.Error(err)
+			Logger.Errorf("update user %s with error: %e", uid, err)
 		}
 		if count > 0 {
 			Logger.Infof("user:%s, update: %d", user.NickName, count)

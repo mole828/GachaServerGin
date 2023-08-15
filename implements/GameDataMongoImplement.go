@@ -14,7 +14,7 @@ type GameDataMongoImplement struct {
 	users  *qmgo.Collection
 	gachas *qmgo.Collection
 
-	getUser func(uid string) src.User
+	getUser func(uid string) (src.User, error)
 }
 
 func NewMongoData() (GameDataMongoImplement, error) {
@@ -37,16 +37,15 @@ func NewMongoData() (GameDataMongoImplement, error) {
 		return GameDataMongoImplement{}, err
 	}
 	src.Logger.Infof("gachas count: %d", count)
-	impl.getUser = func(uid string) src.User {
+	impl.getUser = func(uid string) (src.User, error) {
 		var user src.User
 		err := impl.users.Find(context.Background(), bson.M{"uid": uid}).One(&user)
 		if err != nil {
-			src.Logger.Error(err)
-			return src.User{}
+			return src.User{}, err
 		}
-		return user
+		return user, nil
 	}
-	impl.getUser, err = tools.Cache11(impl.getUser)
+	impl.getUser = tools.Cache11e(impl.getUser)
 	if err != nil {
 		return GameDataMongoImplement{}, err
 	}
@@ -62,7 +61,11 @@ func (g GameDataMongoImplement) AddUser(user src.User) {
 }
 
 func (g GameDataMongoImplement) GetUser(uid string) src.User {
-	return g.getUser(uid)
+	user, err := g.getUser(uid)
+	if err != nil {
+		src.Logger.Errorf("GetUser(%s) has error: %e", uid, err)
+	}
+	return user
 }
 
 func (g GameDataMongoImplement) GetUsers() []src.User {

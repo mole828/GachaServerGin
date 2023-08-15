@@ -2,14 +2,15 @@ package src
 
 import (
 	"encoding/json"
+	"errors"
 	"testing"
 )
 
 var token = "j+GRJigVftyXQXmz/sWvgXEE"
 
 func TestArknightsApi_GetUser(t *testing.T) {
-	token = "j+GRJigVftyXQXmz/sWvgXEE"
-	user, err := ArknightsApi{}.GetUser(token)
+	token = "48I0GjeojP2M01tjdnMcQafS"
+	user, err := ArknightsApi{}.FindUser(token)
 	if err != nil {
 		t.Error(err)
 	}
@@ -39,4 +40,20 @@ func TestArknightsApi_GetGacha(t *testing.T) {
 		}
 		t.Logf("gacha: %+v", gacha)
 	})
+}
+
+func TestError(t *testing.T) {
+	e := ResponseDataStatusError[any]{
+		ResponseData[any]{
+			Msg:    "err msg",
+			Data:   "",
+			Status: 3,
+		},
+	}
+	var responseDataStatusError ResponseDataStatusError[any]
+	switch {
+	case errors.As(e, &responseDataStatusError):
+		t.Log("is status error")
+	}
+	t.Log(errors.As(e, &ResponseDataStatusError[any]{}))
 }

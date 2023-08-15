@@ -38,10 +38,13 @@ func NewMongoData() (GameDataMongoImplement, error) {
 	}
 	src.Logger.Infof("gachas count: %d", count)
 	impl.getUser = func(uid string) (src.User, error) {
-		var user src.User
-		err := impl.users.Find(context.Background(), bson.M{"uid": uid}).One(&user)
+		var (
+			user src.User
+			errB error
+		)
+		errB = impl.users.Find(context.Background(), bson.M{"uid": uid}).One(&user)
 		if err != nil {
-			return src.User{}, err
+			return src.User{}, errB
 		}
 		return user, nil
 	}

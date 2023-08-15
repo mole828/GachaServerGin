@@ -3,6 +3,8 @@ package src
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -16,6 +18,14 @@ type ResponseData[T any] struct {
 	Status int    `json:"status"`
 	Msg    string `json:"msg"`
 	Data   T      `json:"data"`
+}
+
+type ResponseDataStatusError[T any] struct {
+	ResponseData[T]
+}
+
+func (r ResponseDataStatusError[T]) Error() string {
+	return r.Msg
 }
 
 type User struct {
@@ -33,14 +43,22 @@ func closeResponseBody(body io.ReadCloser) {
 	}
 }
 
-func (ArknightsApi) GetUser(token string) (User, error) {
-	postData := map[string]interface{}{
-		"appId":           1,
-		"channelMasterId": 1,
-		"channelToken": map[string]string{
+func (ArknightsApi) GetUser(token string, channelMasterId int) (User, error) {
+	var postData map[string]interface{}
+	if channelMasterId == 1 {
+		postData = map[string]interface{}{
+			"appId":           1,
+			"channelMasterId": 1,
+			"channelToken": map[string]string{
+				"token": token,
+			},
+		}
+	} else if channelMasterId == 2 {
+		postData = map[string]interface{}{
 			"token": token,
-		},
+		}
 	}
+
 	postJSON, _ := json.Marshal(postData)
 	postResponse, err := http.Post("https://as.hypergryph.com/u8/user/info/v1/basic", "application/json", bytes.NewBuffer(postJSON))
 	if err != nil {
@@ -57,9 +75,36 @@ func (ArknightsApi) GetUser(token string) (User, error) {
 		Logger.Error(string(postResponseBody))
 		return User{}, err
 	}
+	if responseData.Status != 0 {
+		return User{}, ResponseDataStatusError[User]{
+			ResponseData: responseData,
+		}
+	}
 	data := responseData.Data
+	if data.NickName == "" || data.Uid == "" {
+		return data, errors.New(fmt.Sprintf("empty user data: %s", postResponseBody))
+	}
 	data.Token = token
 	return data, nil
+}
+
+func (r ArknightsApi) FindUser(token string) (User, error) {
+	user1, err1 := r.GetUser(token, 1)
+	user2, err2 := r.GetUser(token, 2)
+	if err1 != nil && err2 != nil {
+		if errors.As(err1, &ResponseDataStatusError[User]{}) &&
+			errors.As(err2, &ResponseDataStatusError[User]{}) {
+			return User{}, err2
+		}
+		return User{}, errors.Join(err1, err2)
+	}
+	var user User
+	if user1.Uid == "" {
+		user = user2
+	} else {
+		user = user1
+	}
+	return user, nil
 }
 
 type Pagination struct {

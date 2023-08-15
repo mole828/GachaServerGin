@@ -7,14 +7,16 @@ type GachaService struct {
 	analyst       Analyst
 }
 
-func (s GachaService) updateUser(token string) (int, error) {
+func (s GachaService) updateUser(user User) (int, error) {
 	count := 0
-	apiUser, err := s.api.GetUser(token)
+	apiUser, err := s.api.FindUser(user.Token)
 	if err != nil {
 		return count, err
 	}
-	apiUser.Token = token
-	user := s.data.GetUser(apiUser.Uid)
+	if apiUser.NickName == "" {
+		Logger.Errorf("nickName is empty, user: %+v", user)
+		return 0, nil
+	}
 	if apiUser.NickName != user.NickName {
 		s.data.UpdateName(user.Uid, apiUser.NickName)
 		Logger.Infof("uid: %s change name, %s -> %s", user.Uid, user.NickName, apiUser.NickName)
@@ -50,9 +52,9 @@ func (s GachaService) task() {
 	for {
 		uid := <-s.UpdateChannel
 		user := s.data.GetUser(uid)
-		count, err := s.updateUser(user.Token)
+		count, err := s.updateUser(user)
 		if err != nil {
-			Logger.Errorf("update user %s with error: %e", uid, err)
+			Logger.Errorf("update user %+v with error: %e", user, err)
 		}
 		if count > 0 {
 			Logger.Infof("user:%s, update: %d", user.NickName, count)

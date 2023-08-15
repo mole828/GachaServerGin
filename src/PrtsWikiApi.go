@@ -10,7 +10,7 @@ import (
 func GetLimitedPools() []string {
 	response, err := http.Get("https://prts.wiki/w/%E5%8D%A1%E6%B1%A0%E4%B8%80%E8%A7%88")
 	if err != nil {
-		return nil
+		return []string{"云间清醒梦", "真理孑然", "万象伶仃"}
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()

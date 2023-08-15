@@ -57,7 +57,7 @@ func main() {
 	go func() {
 		for {
 			for _, user := range data.GetUsers() {
-				src.Logger.Infof("user: %s begin", user.NickName)
+				//src.Logger.Infof("user: %s begin, uid: %s", user.NickName, user.Uid)
 				service.UpdateChannel <- user.Uid
 				time.Sleep(time.Minute)
 			}

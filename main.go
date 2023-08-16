@@ -5,7 +5,6 @@ import (
 	"GachaServerGin/src"
 	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
-	"github.com/sirupsen/logrus"
 	"strconv"
 	"time"
 )
@@ -55,7 +54,7 @@ func main() {
 	service := src.NewGachaService(data, analyst)
 	var lastTime, lastLastTime time.Time
 	go func() {
-		lastTime = time.Now()
+		lastTime, lastLastTime = time.Now(), time.Now()
 		for {
 			for _, user := range data.GetUsers() {
 				//src.Logger.Infof("user: %s begin, uid: %s", user.NickName, user.Uid)
@@ -70,17 +69,11 @@ func main() {
 		context.JSON(200, service.UpdateTimes)
 	})
 	app.GET("/users.invalid", func(context *gin.Context) {
-		pick := lo.PickBy(service.UpdateTimes, func(key string, value time.Time) bool {
-			src.Logger.WithFields(logrus.Fields{
-				"lastTime":                    lastTime,
-				"lastLastTime":                lastLastTime,
-				"value":                       value,
-				"lastLastTime.Sub(value) > 0": lastLastTime.Sub(value) > 0,
-			}).Info()
+		context.JSON(200, lo.Map(lo.Keys(lo.PickBy(service.UpdateTimes, func(key string, value time.Time) bool {
 			return lastLastTime.Sub(value) > 0
-		})
-		src.Logger.WithField("pick", pick).Info()
-		context.JSON(200, lo.Keys(pick))
+		})), func(uid string, _ int) string {
+			return data.GetUser(uid).NickName
+		}))
 	})
 	app.POST("/register", func(context *gin.Context) {
 		token := context.Query("token")

@@ -71,7 +71,7 @@ func (s GachaService) task() {
 		count, err := s.updateUser(user)
 		s.UpdateTimes[uid] = time.Now()
 		if err != nil {
-			Logger.WithError(err).WithField("user", user).Info()
+			//Logger.WithError(err).WithField("user", user).Info()
 			s.UpdateTimes[uid] = time.Unix(0, 0)
 		}
 		if count > 0 {

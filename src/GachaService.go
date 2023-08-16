@@ -1,17 +1,21 @@
 package src
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 type GachaService struct {
 	api           ArknightsApi
 	data          GachaData
 	UpdateChannel chan string
 	analyst       Analyst
+	UpdateTimes   map[string]time.Time
 }
 
 func (s GachaService) updateUser(user User) (int, error) {
 	count := 0
-	apiUser, err := s.api.FindUser(user.Token)
+	apiUser, err := s.api.GetUser(user.Token, user.ChannelMasterId) // s.api.FindUser(user.Token)
 	if err != nil {
 		var responseDataStatusError ResponseDataStatusError[User]
 		switch {
@@ -65,8 +69,10 @@ func (s GachaService) task() {
 		uid := <-s.UpdateChannel
 		user := s.data.GetUser(uid)
 		count, err := s.updateUser(user)
+		s.UpdateTimes[uid] = time.Now()
 		if err != nil {
-			Logger.WithError(err).Infof("update user %+v", user)
+			Logger.WithError(err).WithField("user", user).Info()
+			s.UpdateTimes[uid] = time.Unix(0, 0)
 		}
 		if count > 0 {
 			Logger.Infof("user:%s, update: %d", user.NickName, count)
@@ -75,12 +81,29 @@ func (s GachaService) task() {
 	}
 }
 
+func (s GachaService) NewToken(token string) error {
+	api, err := s.api.FindUser(token)
+	if err != nil {
+		return err
+	}
+	local := s.data.GetUser(api.Uid)
+	Logger.WithField("api", api).WithField("local", local).WithField("token", token).Info("NewToken")
+	if local.Uid == "" {
+		s.data.AddUser(api)
+	} else {
+		s.data.UpdateToken(api.Uid, api.Token)
+	}
+	s.UpdateChannel <- api.Uid
+	return nil
+}
+
 func NewGachaService(data GachaData, analyst Analyst) *GachaService {
 	service := &GachaService{
 		api:           ArknightsApi{},
 		data:          data,
 		UpdateChannel: make(chan string),
 		analyst:       analyst,
+		UpdateTimes:   make(map[string]time.Time),
 	}
 	go service.task()
 	return service

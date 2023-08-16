@@ -9,7 +9,6 @@ import (
 var token = "j+GRJigVftyXQXmz/sWvgXEE"
 
 func TestArknightsApi_GetUser(t *testing.T) {
-	token = "48I0GjeojP2M01tjdnMcQafS"
 	user, err := ArknightsApi{}.FindUser(token)
 	if err != nil {
 		t.Error(err)

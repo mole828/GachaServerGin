@@ -2,7 +2,6 @@ package implements
 
 import (
 	"GachaServerGin/src"
-	"GachaServerGin/tools"
 	"context"
 	"errors"
 	"github.com/qiniu/qmgo"
@@ -48,7 +47,7 @@ func NewMongoData() (GameDataMongoImplement, error) {
 		}
 		return user, nil
 	}
-	impl.getUser = tools.Cache11e(impl.getUser)
+	//impl.getUser = tools.Cache11e(impl.getUser)
 	if err != nil {
 		return GameDataMongoImplement{}, err
 	}

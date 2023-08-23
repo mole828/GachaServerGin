@@ -1,10 +1,11 @@
 package src
 
 import (
-	"github.com/PuerkitoBio/goquery"
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 func GetLimitedPools() []string {
@@ -32,7 +33,7 @@ func GetLimitedPools() []string {
 		selection.Find("td").Find("a").Each(func(_ int, selection *goquery.Selection) {
 			full := selection.Text()
 			title, exist := selection.Attr("title")
-			if strings.Index(full, "限定寻访") != -1 && exist {
+			if strings.Contains(full, "限定寻访") && exist {
 				labels = append(labels, title)
 			}
 		})

@@ -39,7 +39,7 @@ func (c Counter[K]) Inc(key K, value int) {
 
 func NewCounter[K comparable]() Counter[K] {
 	return Counter[K]{
-		NewDefaultDict[K, int](func() int {
+		NewDefaultDict[K](func() int {
 			return 0
 		}),
 	}

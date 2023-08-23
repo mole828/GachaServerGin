@@ -7,7 +7,7 @@ import (
 )
 
 func TestCache11e(t *testing.T) {
-	c11e := Cache11e[int, string](func(i int) (string, error) {
+	c11e := Cache11e(func(i int) (string, error) {
 		if i == 2 {
 			return "", errors.New("i=2")
 		}

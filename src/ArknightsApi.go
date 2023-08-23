@@ -82,7 +82,8 @@ func (ArknightsApi) GetUser(token string, channelMasterId int) (User, error) {
 	}
 	data := responseData.Data
 	if data.NickName == "" || data.Uid == "" {
-		return data, errors.New(fmt.Sprintf("empty user data: %s", postResponseBody))
+		return data, fmt.Errorf("empty user data: %s", postResponseBody)
+		//errors.New(fmt.Sprintf("empty user data: %s", postResponseBody))
 	}
 	data.Token = token
 	return data, nil
@@ -164,6 +165,9 @@ func getGachaBody(token string, channelId int, page int) ([]byte, error) {
 
 func (ArknightsApi) GetGacha(token string, channelId int, page int) (PaginationData[Gacha], error) {
 	body, err := getGachaBody(token, channelId, page)
+	if err != nil {
+		return PaginationData[Gacha]{}, err
+	}
 	var responseData ResponseData[PaginationData[Gacha]]
 	err = json.Unmarshal(body, &responseData)
 	if err != nil {

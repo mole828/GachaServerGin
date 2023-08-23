@@ -28,7 +28,7 @@ type Cop[A any, B any] struct {
 
 func Cache12[K comparable, A any, B any](fn func(K) (A, B)) func(K) (A, B) {
 	src.Logger.Info("Create Cache12")
-	c11 := Cache11[K, Cop[A, B]](func(key K) Cop[A, B] {
+	c11 := Cache11(func(key K) Cop[A, B] {
 		a, b := fn(key)
 		return Cop[A, B]{
 			va: a,

@@ -3,10 +3,11 @@ package main
 import (
 	"GachaServerGin/implements"
 	"GachaServerGin/src"
-	"github.com/gin-gonic/gin"
-	"github.com/samber/lo"
 	"strconv"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/samber/lo"
 )
 
 func main() {

@@ -24,7 +24,6 @@ func (s GachaService) updateUser(user User) (int, error) {
 			case 3:
 				return 0, errors.New(responseDataStatusError.Msg)
 			}
-			break
 		default:
 			return count, err
 		}

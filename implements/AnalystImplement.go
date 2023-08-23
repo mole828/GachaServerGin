@@ -3,8 +3,9 @@ package implements
 import (
 	"GachaServerGin/src"
 	"GachaServerGin/tools"
-	"github.com/samber/lo"
 	"math"
+
+	"github.com/samber/lo"
 )
 
 type MemAnalyze struct {
@@ -19,7 +20,7 @@ func makeRarityCounter() tools.Counter[int] {
 
 func (an MemAnalyze) analyzeData(uid string, data []src.Gacha) {
 	analyses := an.analyses.Get(uid)
-	pools := tools.NewDefaultDict[string, tools.Counter[int]](makeRarityCounter)
+	pools := tools.NewDefaultDict[string](makeRarityCounter)
 	for _, gacha := range data {
 		pool := pools.Get(gacha.Pool)
 		for _, char := range gacha.Chars {
@@ -83,7 +84,7 @@ func (an MemAnalyze) Analysis(uid string) src.Analysis {
 func NewMemAnalyst(data src.GachaData) src.Analyst {
 	v := MemAnalyze{
 		data: data,
-		analyses: tools.NewDefaultDict[string, src.Analysis](func() src.Analysis {
+		analyses: tools.NewDefaultDict[string](func() src.Analysis {
 			return src.Analysis{
 				Summary: src.RarityCounter{},
 				Pools:   map[string]src.RarityCounter{},
@@ -97,6 +98,6 @@ func NewMemAnalyst(data src.GachaData) src.Analyst {
 }
 
 func (an MemAnalyze) UpdateLimitedPools() {
-	an.limitedPools = src.GetLimitedPools()
+	// an.limitedPools = src.GetLimitedPools()
 	panic("TODO: how to re analyze ")
 }

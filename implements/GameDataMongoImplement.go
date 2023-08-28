@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"github.com/qiniu/qmgo"
+	"github.com/samber/lo"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -107,7 +108,7 @@ func (g GameDataMongoImplement) UpdateName(uid string, name string) {
 }
 
 func (g GameDataMongoImplement) AddGacha(gacha src.Gacha) {
-	if gacha.Uid == "" {
+	if lo.IsEmpty(gacha.Uid) {
 		src.Logger.Error(errors.New("gacha loss id"))
 		return
 	}
@@ -140,19 +141,19 @@ func (g GameDataMongoImplement) HasGacha(uid string, ts int) bool {
 func (g GameDataMongoImplement) GetGachasByPage(uid string, page int, pageSize int) src.PaginationData[src.Gacha] {
 	var gachas []src.Gacha
 	filter := bson.M{}
-	if uid != "" {
+	if lo.IsNotEmpty(uid) {
 		filter["uid"] = uid
 	}
 	//src.Logger.Infof("GetGachasByPage: filter %+v", filter)
 	query := g.gachas.Find(context.Background(), filter).Sort("-ts")
 	total, err := query.Count()
-	if err != nil {
+	if lo.IsNotEmpty(err) {
 		src.Logger.Error(err)
 		return src.PaginationData[src.Gacha]{}
 	}
 	query = query.Skip(int64(page * pageSize)).Limit(int64(pageSize))
 	err = query.All(&gachas)
-	if err != nil {
+	if lo.IsNotEmpty(err) {
 		src.Logger.Error(err)
 		return src.PaginationData[src.Gacha]{}
 	}

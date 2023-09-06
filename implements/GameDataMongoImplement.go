@@ -100,7 +100,7 @@ func (g GameDataMongoImplement) UpdateToken(uid string, token string) {
 }
 
 func (g GameDataMongoImplement) UpdateName(uid string, name string) {
-	err := g.users.UpdateOne(context.Background(), bson.M{"uid": uid}, bson.M{"$set": bson.M{"name": name}})
+	err := g.users.UpdateOne(context.Background(), bson.M{"uid": uid}, bson.M{"$set": bson.M{"nickName": name}})
 	if err != nil {
 		src.Logger.Error(err)
 		return

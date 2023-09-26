@@ -100,7 +100,7 @@ func NewGachaService(data GachaData, analyst Analyst) *GachaService {
 	service := &GachaService{
 		api:           ArknightsApi{},
 		data:          data,
-		UpdateChannel: make(chan string),
+		UpdateChannel: make(chan string, 4),
 		analyst:       analyst,
 		UpdateTimes:   make(map[string]time.Time),
 	}

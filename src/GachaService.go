@@ -2,6 +2,7 @@ package src
 
 import (
 	"errors"
+	"github.com/samber/lo"
 	"time"
 )
 
@@ -87,7 +88,7 @@ func (s GachaService) NewToken(token string) error {
 	}
 	local := s.data.GetUser(api.Uid)
 	Logger.WithField("api", api).WithField("local", local).WithField("token", token).Info("NewToken")
-	if local.Uid == "" {
+	if lo.IsEmpty(local.Uid) {
 		s.data.AddUser(api)
 	} else {
 		s.data.UpdateToken(api.Uid, api.Token)

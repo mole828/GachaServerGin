@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/samber/lo"
 	"io"
 	"log"
 	"net/http"
@@ -81,9 +82,8 @@ func (ArknightsApi) GetUser(token string, channelMasterId int) (User, error) {
 		}
 	}
 	data := responseData.Data
-	if data.NickName == "" || data.Uid == "" {
+	if lo.IsEmpty(data.NickName) || lo.IsEmpty(data.Uid) {
 		return data, fmt.Errorf("empty user data: %s", postResponseBody)
-		//errors.New(fmt.Sprintf("empty user data: %s", postResponseBody))
 	}
 	data.Token = token
 	return data, nil
@@ -100,7 +100,7 @@ func (r ArknightsApi) FindUser(token string) (User, error) {
 		return User{}, errors.Join(err1, err2)
 	}
 	var user User
-	if user1.Uid == "" {
+	if lo.IsEmpty(user1.Uid) {
 		user = user2
 	} else {
 		user = user1

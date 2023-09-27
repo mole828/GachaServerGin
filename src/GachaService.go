@@ -29,7 +29,7 @@ func (s GachaService) updateUser(user User) (int, error) {
 			return count, err
 		}
 	}
-	if apiUser.NickName == "" {
+	if lo.IsEmpty(apiUser.NickName) {
 		Logger.Errorf("nickName is empty, user: %+v", user)
 		return 0, nil
 	}
